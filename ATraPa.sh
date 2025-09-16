@@ -2,6 +2,16 @@
  
 # ATraPa by Javierbu javierbu@gmail.com mayo/2015
 # y su ayudante Ivanuco
+# Improved version with better security and error handling
+
+# Function to validate menu options
+validate_menu_option() {
+    case "$1" in
+        [1-4]|0|00|000|11|21|31|41|99|999) return 0 ;;
+        "") echo " ❌ Error: No se ingresó ninguna opción"; return 1 ;;
+        *) echo " ❌ Error: Opción '$1' no válida"; return 1 ;;
+    esac
+}
 
 function Nombre2_Opcion3()	{
 clear
