@@ -4,6 +4,26 @@
 # y su ayudante Ivanuco
 # Improved version with better security and error handling
 
+# Function to check if required commands exist
+check_dependencies() {
+    local missing_deps=()
+    local deps=("tcpdump" "awk" "grep" "sed")
+    
+    for dep in "${deps[@]}"; do
+        if ! command -v "$dep" &> /dev/null; then
+            missing_deps+=("$dep")
+        fi
+    done
+    
+    if [ ${#missing_deps[@]} -gt 0 ]; then
+        echo " ❌ Error: Dependencias faltantes: ${missing_deps[*]}"
+        echo " Instala con: sudo apt-get install ${missing_deps[*]}"
+        return 1
+    fi
+    return 0
+}
+# Improved version with better security and error handling
+
 # Function to validate menu options
 validate_menu_option() {
     case "$1" in
@@ -111,7 +131,7 @@ function Trafico()	{
 		
 					clear
 					banner
-					tcpdump -v -n -r  capturas/"${FILENAME2}".cap  | grep $IP
+					tcpdump -v -n -r  capturas/"${FILENAME2}".cap  | grep "$IP"
 					echo
 					echo "Pulsa enter para volver"
 					read -r
@@ -168,7 +188,7 @@ function Trafico()	{
 		
 					clear
 					banner
-					tcpdump -v -n -r  capturas/"${FILENAME2}".cap  | grep $IP
+					tcpdump -v -n -r  capturas/"${FILENAME2}".cap  | grep "$IP"
 					echo
 					echo " Pulsa enter para volver"
 					read -r
@@ -251,7 +271,7 @@ function banner() {
 
 function Puertos()      {
 
-        #       Puerto=$(tcpdump -r capturas/"$FILENAME"2.cap -nn | grep $IP | awk '{print $3}' | grep $IP | cut -d "." -f 5 | sed '/^$/d' | uniq)
+        #       Puerto=$(tcpdump -r capturas/"$FILENAME"2.cap -nn | grep "$IP" | awk '{print $3}' | grep "$IP" | cut -d "." -f 5 | sed '/^$/d' | uniq)
 		Puerto=$(tcpdump -r capturas/"$FILENAME"2.cap -nn  | grep -o $IP'......' | awk '{print $1}' | sed -e 's/://g' |  cut -d '.' -f 5 | sort | uniq)
 	#	Puerto=$(tcpdump -r capturas/"$FILENAME"2.cap -nn |grep -v A | grep -o $IP'......' | awk '{print $1}' | sed -e 's/://g' | cut -d '.' -f 5 | sed '/^$/d' | uniq)
         #       Protocolo=$(tcpdump -r capturas/"$FILENAME"2.cap  | grep -o $IP'......' | awk '{print $1}' | sed -e 's/://g' | cut -d '.' -f 5 | sed '/^$/d' | uniq)
@@ -274,7 +294,7 @@ function Puertos()      {
 
                                         clear
                                         banner
-                                        tcpdump -v -n -r  capturas/"${FILENAME2}".cap  | grep $IP
+                                        tcpdump -v -n -r  capturas/"${FILENAME2}".cap  | grep "$IP"
                                         echo
                                         echo "Pulsa enter para volver"
                                         read -r
@@ -347,8 +367,8 @@ function Proceso()  {
 
         clear
 	banner
-        Proceso=$(cat datos/netstat.dat | grep $IP -A 2 | grep "\[" | sed '/^$/d' | uniq)
-        PID=$(cat datos/netstat.dat | grep $IP | awk '{print $5}' | sed '/^$/d' | uniq)
+        Proceso=$(cat datos/netstat.dat | grep "$IP" -A 2 | grep "\[" | sed '/^$/d' | uniq)
+        PID=$(cat datos/netstat.dat | grep "$IP" | awk '{print $5}' | sed '/^$/d' | uniq)
         echo
         echo " IP        $IP"
 	echo " Proceso  $Proceso"
@@ -857,6 +877,13 @@ function Opcion3()      {
 function Comienzo()     {               ## menu principal
        
         clear
+        
+        # Check dependencies before starting
+        if ! check_dependencies; then
+            echo " Por favor, instala las dependencias faltantes antes de continuar."
+            exit 1
+        fi
+        
         echo
         echo ":::'###::::'########:'########:::::'###::::'########:::::'###::::"
         echo "::'## ##:::... ##..:: ##.... ##:::'## ##::: ##.... ##:::'## ##::: "              
@@ -867,6 +894,7 @@ function Comienzo()     {               ## menu principal
         echo " ##:::: ##:::: ##:::: ##:::. ##: ##:::: ##: ##:::::::: ##:::: ##: "  
         echo "..:::::..:::::..:::::..:::::..::..:::::..::..:::::::::..:::::..:: "
         echo " Analizador de Trafico Pasivo 0.8-Beta by Javierbu"
+        echo " ✅ Versión mejorada con mejor seguridad y validaciones"
         Menu
 }
 function Menu() {
