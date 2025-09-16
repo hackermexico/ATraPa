@@ -1,32 +1,67 @@
 # ATraPa
 
-Analizador de trafico pasivo
+**Analizador de Tráfico Pasivo** (Passive Traffic Analyzer)
 
-# Descripcion:
+## Descripción
 
-ATraPa nace con la intencion de analizar trafico y comparar diferentes capturas buscando conexiones sospechosas y dando algunos datos sobre ellas, como la cantidad de datos de ida y vuelta que han intercamniado, resoluciones dns, puertos y protocolos que han usado en la comunicacion, numero de veces que han establecido la comunicacion, geolocalizacion de la ip implicada, y algunas cosas mas.
+ATraPa nace con la intención de analizar tráfico y comparar diferentes capturas buscando conexiones sospechosas y dando algunos datos sobre ellas, como:
 
-# Uso
+- La cantidad de datos de ida y vuelta que han intercambiado
+- Resoluciones DNS
+- Puertos y protocolos que han usado en la comunicación
+- Número de veces que han establecido la comunicación
+- Geolocalización de la IP implicada
+- Y algunas cosas más
 
-Descarga el archivo ATraPa.sh o copia y pega su contenido en un archivo de texto.
+## Requisitos
 
-Dale permisos de ejecucion "chmod +x ATraPa.sh"
+- Sistema operativo: Ubuntu, Kali Linux (probado)
+- Herramientas necesarias: `tcpdump`, `awk`, `grep`, `sed`
+- Permisos de administrador para captura de tráfico
 
-Ejecutalo "ATraPa"
+## Instalación
 
-Sigue las instrucciones.
+1. Descarga el archivo `ATraPa.sh` o copia su contenido en un archivo de texto
+2. Dale permisos de ejecución: `chmod +x ATraPa.sh`
+3. Ejecuta: `./ATraPa.sh`
+4. Sigue las instrucciones en pantalla
 
-# Aviso
+## Uso
 
-Este es un proyecto que lleva mucho tiempo parado y no esta completamente depurado. Esta probado sobre ubuntu y Kali1
+### Funcionalidades principales:
 
-# Capturas de pantalla
+1. **Capturar tráfico para analizarlo** - Realiza una captura en tiempo real
+2. **Analizar una captura existente** - Procesa archivos .cap/.pcap existentes
+3. **Comparar 2 capturas** - Compara dos archivos de captura
+4. **Hacer 2 capturas y compararlas** - Automatiza el proceso completo
 
-http://www.subirimagenes.com/imagen-atrapa-9466143.html                     Menu principal
+### Importante:
 
-http://www.subirimagenes.com/imagen-seleccionarip-9466145.html              Seleccion de IP
+⚠️ **CUANDO VAYAS A REALIZAR LAS CAPTURAS, ES IMPORTANTE NO ABRIR NADA EN EL DISPOSITIVO QUE PROVOQUE TRÁFICO (navegadores web, programas P2P, etc.)**
 
-http://www.subirimagenes.com/imagen-investigarip-9466148.html               Investigar IP
+## Estructura del proyecto
 
+```
+ATraPa/
+├── ATraPa.sh          # Script principal
+├── capturas/          # Directorio para archivos de captura (se crea automáticamente)
+└── datos/            # Directorio para datos temporales (se crea automáticamente)
+```
 
+## Estado del proyecto
 
+Este proyecto lleva tiempo sin mantenimiento activo y no está completamente depurado. Ha sido probado principalmente en Ubuntu y Kali Linux.
+
+## Contribuciones
+
+Las mejoras y correcciones son bienvenidas. Algunos aspectos que necesitan atención:
+
+- Validación mejorada de entrada de usuario
+- Manejo de errores más robusto  
+- Documentación adicional
+- Pruebas en más distribuciones
+
+## Autor
+
+- **Javierbu** (javierbu@gmail.com) - Mayo 2015
+- Colaborador: **Ivanuco**

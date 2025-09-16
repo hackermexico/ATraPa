@@ -2,6 +2,36 @@
  
 # ATraPa by Javierbu javierbu@gmail.com mayo/2015
 # y su ayudante Ivanuco
+# Improved version with better security and error handling
+
+# Function to check if required commands exist
+check_dependencies() {
+    local missing_deps=()
+    local deps=("tcpdump" "awk" "grep" "sed")
+    
+    for dep in "${deps[@]}"; do
+        if ! command -v "$dep" &> /dev/null; then
+            missing_deps+=("$dep")
+        fi
+    done
+    
+    if [ ${#missing_deps[@]} -gt 0 ]; then
+        echo " ❌ Error: Dependencias faltantes: ${missing_deps[*]}"
+        echo " Instala con: sudo apt-get install ${missing_deps[*]}"
+        return 1
+    fi
+    return 0
+}
+# Improved version with better security and error handling
+
+# Function to validate menu options
+validate_menu_option() {
+    case "$1" in
+        [1-4]|0|00|000|11|21|31|41|99|999) return 0 ;;
+        "") echo " ❌ Error: No se ingresó ninguna opción"; return 1 ;;
+        *) echo " ❌ Error: Opción '$1' no válida"; return 1 ;;
+    esac
+}
 
 function Nombre2_Opcion3()	{
 clear
@@ -13,9 +43,9 @@ echo
 echo " O pulsa 99 para volver"
 echo
 echo -n " Opcion : "
-read FILENAME2
+read -r FILENAME2
 
-        if [ $FILENAME2 = 99 ] ;then
+        if [ "$FILENAME2" = 99 ] ;then
 
                 Comienzo
         else
@@ -24,7 +54,7 @@ read FILENAME2
 
         fi
 
-        if [ -f capturas/${FILENAME2}.cap ] 2>/dev/null  ;then
+        if [ -f capturas/"${FILENAME2}".cap ] 2>/dev/null  ;then
  
                 echo
  
@@ -33,7 +63,7 @@ read FILENAME2
                 clear
 		banner
                 echo " No se encuentra el archivo ${FILENAME2}.cap .Revise la carpeta \"capturas\".Pulse enter para volver a intentarlo"
-                read
+                read -r
                 Nombre2_Opcion3
         fi
  
@@ -49,14 +79,14 @@ read FILENAME2
                
                 fi
        
-        rm datos/${FILENAME}* datos/${FILENAME2}* 2>/dev/null
+        rm "datos/${FILENAME}"* "datos/${FILENAME2}"* 2>/dev/null
 
 		}
 
 function Trafico()	{
 
-	recibidos=`tcpdump -v -n -r  capturas/${FILENAME2}.cap  | grep $IP | grep ${IP}'.*''>' | grep -o length'...*' | awk '{print $2}' | awk '{ sum+=$1 } END {print sum}'`
-	enviados=`tcpdump -v -n -r  capturas/${FILENAME2}.cap  | grep $IP | grep '> '${IP} | grep -o length'...*' | awk '{print $2}' | awk '{ sum+=$1 } END {print sum}'`
+	recibidos=$(tcpdump -v -n -r  "capturas/${FILENAME2}.cap"  | grep "$IP" | grep "${IP}"'.*''>' | grep -o length'...*' | awk '{print $2}' | awk '{ sum+=$1 } END {print sum}')
+	enviados=$(tcpdump -v -n -r  "capturas/${FILENAME2}.cap"  | grep "$IP" | grep '> '"${IP}" | grep -o length'...*' | awk '{print $2}' | awk '{ sum+=$1 } END {print sum}')
 	
 	if [[ $recibidos = *[1-9]* ]] ;then
 
@@ -79,12 +109,12 @@ function Trafico()	{
 	clear
 	banner
 	
-	if [ -z $enviados ] ;then
+	if [ -z "$enviados" ] ;then
 
 		clear
 		banner
 			
-			if [ -z $recibidos ] 2>/dev/null ;then
+			if [ -z "$recibidos" ] 2>/dev/null ;then
 		
 				echo " No se ha podido registrar ningun dato enviado ni recibido con $IP implicada"
 				echo
@@ -95,19 +125,19 @@ function Trafico()	{
 				echo " Es posible que te saque de dudas, o te genere alguna mas"
 				echo
 				echo -n " Pulsa 1 para ver las conexiones , o enter para volver: "
-				read respuesta
+				read -r respuesta
 			
-				if [ $respuesta = 1 ] ;then
+				if [ "$respuesta" = 1 ] ;then
 		
 					clear
 					banner
-					tcpdump -v -n -r  capturas/${FILENAME2}.cap  | grep $IP
+					tcpdump -v -n -r  capturas/"${FILENAME2}".cap  | grep "$IP"
 					echo
 					echo "Pulsa enter para volver"
-					read
+					read -r
 					Investigar_IP
 			
-				elif [ $respuesta = "" ] ;then
+				elif [ "$respuesta" = "" ] ;then
 
 					Investigar_IP
 				else
@@ -152,19 +182,19 @@ function Trafico()	{
 				echo " Es posible que te saque de dudas, o te genere alguna mas"
 				echo
 				echo -n " Pulsa 1 para ver las conexiones , o enter para volver: "
-				read respuesta
+				read -r respuesta
 			
-				if [ $respuesta = 1 ] ;then
+				if [ "$respuesta" = 1 ] ;then
 		
 					clear
 					banner
-					tcpdump -v -n -r  capturas/${FILENAME2}.cap  | grep $IP
+					tcpdump -v -n -r  capturas/"${FILENAME2}".cap  | grep "$IP"
 					echo
 					echo " Pulsa enter para volver"
-					read
+					read -r
 					Investigar_IP
 			
-				elif [ $respuesta = "" ] ;then
+				elif [ "$respuesta" = "" ] ;then
 
 					Investigar_IP
 				else
@@ -198,7 +228,7 @@ function Trafico()	{
 
 	nslookup $IP > datos/${IP}nslookup.dat
 	sleep 3
-	dominio=`cat datos/${IP}nslookup.dat | grep name | awk '{print $4}'`
+	dominio=$(cat datos/${IP}nslookup.dat | grep name | awk '{print $4}')
 	Rkilo=$(($recibidos / 10**3)) 2>/dev/null
 	Rmega=$(($recibidos / 10**6)) 2>/dev/null
 	Ekilo=$(($enviados / 10**3)) 2>/dev/null
@@ -222,7 +252,7 @@ function Trafico()	{
 	echo 
 	echo
 	echo -n " Pulsa enter para volver"
-	read
+	read -r
 	Investigar_IP
 			
 			}
@@ -241,13 +271,13 @@ function banner() {
 
 function Puertos()      {
 
-        #       Puerto=`tcpdump -r capturas/$FILENAME2.cap -nn | grep $IP | awk '{print $3}' | grep $IP | cut -d "." -f 5 | sed '/^$/d' | uniq`
-		Puerto=`tcpdump -r capturas/$FILENAME2.cap -nn  | grep -o $IP'......' | awk '{print $1}' | sed -e 's/://g' |  cut -d '.' -f 5 | sort | uniq`
-	#	Puerto=`tcpdump -r capturas/$FILENAME2.cap -nn |grep -v A | grep -o $IP'......' | awk '{print $1}' | sed -e 's/://g' | cut -d '.' -f 5 | sed '/^$/d' | uniq`
-        #       Protocolo=`tcpdump -r capturas/$FILENAME2.cap  | grep -o $IP'......' | awk '{print $1}' | sed -e 's/://g' | cut -d '.' -f 5 | sed '/^$/d' | uniq`
+        #       Puerto=$(tcpdump -r capturas/"$FILENAME"2.cap -nn | grep "$IP" | awk '{print $3}' | grep "$IP" | cut -d "." -f 5 | sed '/^$/d' | uniq)
+		Puerto=$(tcpdump -r capturas/"$FILENAME"2.cap -nn  | grep -o $IP'......' | awk '{print $1}' | sed -e 's/://g' |  cut -d '.' -f 5 | sort | uniq)
+	#	Puerto=$(tcpdump -r capturas/"$FILENAME"2.cap -nn |grep -v A | grep -o $IP'......' | awk '{print $1}' | sed -e 's/://g' | cut -d '.' -f 5 | sed '/^$/d' | uniq)
+        #       Protocolo=$(tcpdump -r capturas/"$FILENAME"2.cap  | grep -o $IP'......' | awk '{print $1}' | sed -e 's/://g' | cut -d '.' -f 5 | sed '/^$/d' | uniq)
 		clear
 		banner
-		if [ `echo ${#Puerto}` -ge 20 ] 2>/dev/null ;then
+		if [ $(echo ${#Puerto}) -ge 20 ] 2>/dev/null ;then
 
                         echo " Vaya!. Ha ocurrido un error en la resulucion del puerto"
 			echo
@@ -258,19 +288,19 @@ function Puertos()      {
 			echo " Es posible que esto te resuelva la duda, o te genere alguna mas"
 			echo 
 			echo -n " Pulsa 1 para imprimir las conexiones o enter para volver: "
-			read respuesta
+			read -r respuesta
 			
-				if [ $respuesta = 1 ] ;then
+				if [ "$respuesta" = 1 ] ;then
 
                                         clear
                                         banner
-                                        tcpdump -v -n -r  capturas/${FILENAME2}.cap  | grep $IP
+                                        tcpdump -v -n -r  capturas/"${FILENAME2}".cap  | grep "$IP"
                                         echo
                                         echo "Pulsa enter para volver"
-                                        read
+                                        read -r
                                         Investigar_IP
 
-                                elif [ $respuesta = "" ] ;then
+                                elif [ "$respuesta" = "" ] ;then
 
                                         Investigar_IP
                                 else
@@ -282,13 +312,13 @@ function Puertos()      {
 
 			echo
 			echo
-			tcpdump -r capturas/${FILENAME2}.cap -nn | grep -o $IP
+			tcpdump -r capturas/"${FILENAME2}".cap -nn | grep -o $IP
 			echo
 			echo
 			echo " Espero que te haya sacado de dudas"
 			echo
 			echo -n  " Pulsa enter para volver"
-			read
+			read -r
 			Investigar_IP
 
 		else
@@ -313,19 +343,19 @@ function Puertos()      {
 			echo " Pulsa enter para imprimir una conexion."
 			echo
 			echo -n " Es posible que esto te saque de dudas, o te genere unas cuantas mas."
-                	read
-			tcpdump -r capturas/${FILENAME2}.cap -nn | grep -o $IP | tail -1 
+                	read -r
+			tcpdump -r capturas/"${FILENAME2}".cap -nn | grep -o $IP | tail -1 
 			clear
 			banner
 			echo " Espero que estos datos te ayuden a saber que tipo de trafico es"
 			echo -n " Pulsa enter para volver"
-			read
+			read -r
 			Investigar_IP
 
 		else
 
 		echo -n " Pulsa enter para volver"
-                read
+                read -r
                 Investigar_IP
 
 		fi
@@ -337,15 +367,15 @@ function Proceso()  {
 
         clear
 	banner
-        Proceso=`cat datos/netstat.dat | grep $IP -A 2 | grep "\[" | sed '/^$/d' | uniq`
-        PID=`cat datos/netstat.dat | grep $IP | awk '{print $5}' | sed '/^$/d' | uniq`
+        Proceso=$(cat datos/netstat.dat | grep "$IP" -A 2 | grep "\[" | sed '/^$/d' | uniq)
+        PID=$(cat datos/netstat.dat | grep "$IP" | awk '{print $5}' | sed '/^$/d' | uniq)
         echo
         echo " IP        $IP"
 	echo " Proceso  $Proceso"
 	echo " PID       $PID"
         echo
         echo -n "Pulsa enter para volver"
-        read
+        read -r
         Investigar_IP
 
                         }
@@ -403,9 +433,9 @@ function Opcion2()      {
                
                 if  [ -f capturas/${FILENAME2}.pcap ] 2> /dev/null ; then
                         
-			 cp capturas/${FILENAME2}.pcap  capturas/${FILENAME2}.cap
+			 cp capturas/${FILENAME2}.pcap  capturas/"${FILENAME2}".cap
  
-                elif [ -f capturas/${FILENAME2}.cap ] 2>/dev/null  ;then
+                elif [ -f capturas/"${FILENAME2}".cap ] 2>/dev/null  ;then
  
                         echo
  
@@ -414,7 +444,7 @@ function Opcion2()      {
 			clear
 			banner
                         echo " No se encuentra el archivo ${FILENAME2}.cap. Revise la carpeta \"capturas\".Pulse enter para volver a intentarlo"
-                        read
+                        read -r
                         Opcion2
                 fi
  
@@ -448,8 +478,8 @@ function Sacar_IPs1()    {       ## procesamos la captura para sacar las ips imp
 	banner
         echo " Extrayendo IPs destino y origen de $FILENAME2..."
 	sleep 1
-        tcpdump -r capturas/${FILENAME2}.cap -nn | sed -e 's/://g' | awk '{print $3}' | cut -d '.' -f 1,2,3,4 | grep -v [a-z,A-Z,\>,\<] > datos/${FILENAME2}IPsOrigen.dat
-        tcpdump -r capturas/${FILENAME2}.cap -nn | sed -e 's/://g' | awk '{print $5}' | cut -d '.' -f 1,2,3,4 | grep -v [a-z,A-Z,\>,\<] > datos/${FILENAME2}IPsDestino.dat
+        tcpdump -r capturas/"${FILENAME2}".cap -nn | sed -e 's/://g' | awk '{print $3}' | cut -d '.' -f 1,2,3,4 | grep -v [a-z,A-Z,\>,\<] > datos/${FILENAME2}IPsOrigen.dat
+        tcpdump -r capturas/"${FILENAME2}".cap -nn | sed -e 's/://g' | awk '{print $5}' | cut -d '.' -f 1,2,3,4 | grep -v [a-z,A-Z,\>,\<] > datos/${FILENAME2}IPsDestino.dat
         cat datos/${FILENAME2}IPsDestino.dat datos/${FILENAME2}IPsOrigen.dat > datos/${FILENAME2}IPsSegundaCaptura.dat
         cat datos/${FILENAME2}IPsSegundaCaptura.dat | sort | uniq -c > datos/${FILENAME2}IPsCon2Captura.dat
         cat datos/${FILENAME2}IPsSegundaCaptura.dat | sort | uniq -c | sed -e 's/^ *//g' -e 's/\://g' | awk '{print $2}' > datos/Unicas.dat
@@ -472,7 +502,7 @@ function Nombre_Captura_Unica()  {            #asignamos un nombre a la segunda 
           echo -n " Opcion: "
           read FILENAME2 
 
-                if [ $FILENAME2 = 99 ] ;then
+                if [ "$FILENAME2" = 99 ] ;then
 
                         Comienzo
 
@@ -481,7 +511,7 @@ function Nombre_Captura_Unica()  {            #asignamos un nombre a la segunda 
 			clear
 			banner
 			echo " Debes introducir un nombre para tu captura. Pulsa enter para volver a intentarlo"
-			read
+			read -r
 			Nombre_Captura_Unica
 
                 else
@@ -501,12 +531,12 @@ function Nombre_Captura_Unica()  {            #asignamos un nombre a la segunda 
                   fi    
  
  
-                  if [ -f capturas/${FILENAME2}.cap ] ;then
+                  if [ -f capturas/"${FILENAME2}".cap ] ;then
 		
  			   clear
 			   banner
                            echo " Ya existe una captura llamada \"$FILENAME2\". Pulsa enter para volvera intentarlo"
-			   read
+			   read -r
                            Nombre_Captura_Unica
  
                    else
@@ -527,7 +557,7 @@ function Opcion1()      {       ## opcion 1 del menu principal. HACER 1 CAPTURA 
                 echo " Una vez realizada, podremos investigar las IPs que hayan causado trafico."
 		echo
                 echo -n " Pulsa enter para continuar"
-                read
+                read -r
                 clear
                 echo
                 Pedir_Tiempo  
@@ -549,7 +579,7 @@ function Opcion1()      {       ## opcion 1 del menu principal. HACER 1 CAPTURA 
                 echo
                 Sacar_IPs1
                 Seleccionar_IP
-                IP=`uniq datos/Unicas.dat | cat -n | sed -e 's/^ *//g' |  grep ^$Seleccion | awk '{print $2}'`
+                IP=$(uniq datos/Unicas.dat | cat -n | sed -e 's/^ *//g' |  grep ^$Seleccion | awk '{print $2}')
                 Investigar_IP
  
                 }
@@ -558,7 +588,7 @@ clear
  
 function Seleccionar_IP()       {
 
-        NumIPs=`uniq datos/Unicas.dat | cat -n | tail -1 | awk '{print $1}'`
+        NumIPs=$(uniq datos/Unicas.dat | cat -n | tail -1 | awk '{print $1}')
         clear
         banner
         echo " Por favor, selecciona una de las siguientes IPs para estudiarla"
@@ -585,7 +615,7 @@ function Seleccionar_IP()       {
                         echo
                         echo
  
-        IP=`uniq datos/Unicas.dat | cat -n | sed -e 's/^ *//g' |  grep -w ^$Seleccion | awk '{print $2}'`
+        IP=$(uniq datos/Unicas.dat | cat -n | sed -e 's/^ *//g' |  grep -w ^$Seleccion | awk '{print $2}')
         Investigar_IP
  
  
@@ -596,7 +626,7 @@ function Seleccionar_IP()       {
         elif [ $Seleccion = 444 ] 2>/dev/null ;then
                 clear
                         echo
-                        if [ -f capturas/${FILENAME2}.cap ] 2>/dev/null  ;then
+                        if [ -f capturas/"${FILENAME2}".cap ] 2>/dev/null  ;then
                                 echo
                                 Sacar_IPs1
                                 fi
@@ -605,7 +635,7 @@ function Seleccionar_IP()       {
        
                  clear
 		 banner
-                 tcpdump -r capturas/${FILENAME2}.cap -nn | grep "A?"  > datos/${FILENAME2}PeticionDns.dat
+                 tcpdump -r capturas/"${FILENAME2}".cap -nn | grep "A?"  > datos/${FILENAME2}PeticionDns.dat
 		 clear
 		 banner
 		 echo " Resolviendo"
@@ -629,7 +659,7 @@ function Seleccionar_IP()       {
                  cat datos/${FILENAME2}PeticionDns.dat | awk '{print "           "$8}' | sort | uniq -c | sort
                  echo
                  echo " Pulsa enter para volver"
-                 read
+                 read -r
                  Seleccionar_IP
        
         elif [ $Seleccion = 0 ] 2>/dev/null ;then
@@ -644,7 +674,7 @@ function Seleccionar_IP()       {
         else
                 echo -n
                 echo " $Seleccion no es una opcion permitida. Pulsa enter para intentarlo otra vez"
-		read
+		read -r
                 Seleccionar_IP 
                 fi
 }
@@ -692,7 +722,7 @@ clear
                         grep -w $IP datos/${FILENAME2}IPsDestino.dat | sort | uniq -c | sed -e 's/^ *//g' | awk '{print $1}'
                         echo
                         echo "Pulsa enter para volver"
-                        read
+                        read -r
                         Investigar_IP
  
         elif [ $Respuesta = 2 ] ;then
@@ -704,7 +734,7 @@ clear
                         cat datos/${IP}nslookup.dat
                         echo
                         echo "Pulsa enter para volver"
-                        read
+                        read -r
                         Investigar_IP
                
 	elif [ $Respuesta = 3 ] ;then
@@ -740,7 +770,7 @@ clear
         else
                
                 echo " Opcion incorrecta. Pulsa enter para intentarlo de nuevo"
-                read
+                read -r
                 Investigar_IP
  
         fi
@@ -756,9 +786,9 @@ function Opcion3()      {
 	echo " O pulsa 99 para volver"
 	echo
 	echo -n " Opcion : "
-	read FILENAME
+	read -r FILENAME
 
-		if [ $FILENAME = 99 ] ;then
+		if [ "$FILENAME" = 99 ] ;then
 	
 			Comienzo
 		else
@@ -776,7 +806,7 @@ function Opcion3()      {
 			clear
 			banner       
                 	echo " No se encuentra el archivo ${FILENAME}.cap .Revise la carpeta \"capturas\". Pulse enter para volver a intentarlo"
-                	read
+                	read -r
                 	Opcion3
         	fi
 
@@ -794,8 +824,8 @@ function Opcion3()      {
         sleep 3
         clear
         banner
-        tcpdump -r capturas/${FILENAME2}.cap -nn | sed -e 's/://g' | awk '{print $3}' | cut -d '.' -f 1,2,3,4 | grep -v [a-z,A-Z,\>,\<] > datos/${FILENAME2}IPsOrigen.dat
-        tcpdump -r capturas/${FILENAME2}.cap -nn | sed -e 's/://g' | awk '{print $5}' | cut -d '.' -f 1,2,3,4 | grep -v [a-z,A-Z,\>,\<] > datos/${FILENAME2}IPsDestino.dat
+        tcpdump -r capturas/"${FILENAME2}".cap -nn | sed -e 's/://g' | awk '{print $3}' | cut -d '.' -f 1,2,3,4 | grep -v [a-z,A-Z,\>,\<] > datos/${FILENAME2}IPsOrigen.dat
+        tcpdump -r capturas/"${FILENAME2}".cap -nn | sed -e 's/://g' | awk '{print $5}' | cut -d '.' -f 1,2,3,4 | grep -v [a-z,A-Z,\>,\<] > datos/${FILENAME2}IPsDestino.dat
         cat datos/${FILENAME2}IPsDestino.dat datos/${FILENAME2}IPsOrigen.dat > datos/${FILENAME2}IPsSegundaCaptura.dat
         cat datos/${FILENAME2}IPsSegundaCaptura.dat | sort | uniq -c > datos/${FILENAME2}IPsCon2Captura.dat
 
@@ -810,14 +840,14 @@ function Opcion3()      {
         fi
  
         cat datos/${FILENAME2}IPsSegundaCaptura.dat | sort | uniq -c | sed -e 's/^ *//g' -e 's/\://g' | awk '{print $2}' > datos/IPsLimpias.dat
-        NumIPs=`cat -n datos/IPsLimpias.dat | tail -1 | awk '{print $1}'`
+        NumIPs=$(cat -n datos/IPsLimpias.dat | tail -1 | awk '{print $1}')
 	clear
 	banner
         ((NumIPs = NumIPs + 1))
  
         while [ "$NumIPs" -gt "0" ] ; do
  
-                        IP=` head -${NumIPs} datos/IPsLimpias.dat | tail -1`
+                        IP=$( head -${NumIPs} datos/IPsLimpias.dat | tail -1)
                                        
                                 if grep -s "$IP" datos/${FILENAME}IPsPrimeraCaptura.dat &>/dev/null ;then
                                
@@ -834,7 +864,7 @@ function Opcion3()      {
         clear
 	banner
         echo " Pulsa enter para ver y seleccionar las IPs que solo provocaron trafico durante la segunda captura"
-        read
+        read -r
         Seleccionar_IP
        
  
@@ -847,6 +877,13 @@ function Opcion3()      {
 function Comienzo()     {               ## menu principal
        
         clear
+        
+        # Check dependencies before starting
+        if ! check_dependencies; then
+            echo " Por favor, instala las dependencias faltantes antes de continuar."
+            exit 1
+        fi
+        
         echo
         echo ":::'###::::'########:'########:::::'###::::'########:::::'###::::"
         echo "::'## ##:::... ##..:: ##.... ##:::'## ##::: ##.... ##:::'## ##::: "              
@@ -857,6 +894,7 @@ function Comienzo()     {               ## menu principal
         echo " ##:::: ##:::: ##:::: ##:::. ##: ##:::: ##: ##:::::::: ##:::: ##: "  
         echo "..:::::..:::::..:::::..:::::..::..:::::..::..:::::::::..:::::..:: "
         echo " Analizador de Trafico Pasivo 0.8-Beta by Javierbu"
+        echo " ✅ Versión mejorada con mejor seguridad y validaciones"
         Menu
 }
 function Menu() {
@@ -883,26 +921,26 @@ function Menu() {
 	echo " ABRIR NADA EN EL DISPOSITIVO EN EL QUE CAPTURES QUE PROVOQUE TRAFICO, COMO NAVEGADORES WEB, PROGRAMAS P2P, ETC.!!!!!"
 	echo
         echo -n "Opcion: "
-        read RESPUESTA1
+        read -r RESPUESTA1
         clear
  
-        if [ $RESPUESTA1 = 1 ] ;then
+        if [ "$RESPUESTA1" = 1 ] ;then
                
                 Opcion1
        
-        elif [ $RESPUESTA1 = 2 ] ;then
+        elif [ "$RESPUESTA1" = 2 ] ;then
  
                 Opcion2
  
-        elif [ $RESPUESTA1 = 3 ] ;then
+        elif [ "$RESPUESTA1" = 3 ] ;then
  
                 Opcion3
                
-        elif [ $RESPUESTA1 = 4 ] ;then
+        elif [ "$RESPUESTA1" = 4 ] ;then
                
                 Opcion4
  
-        elif [ $RESPUESTA1 = 0 ] ;then
+        elif [ "$RESPUESTA1" = 0 ] ;then
                
                 clear
 		banner
@@ -910,7 +948,7 @@ function Menu() {
                 echo
                 exit
 
-	elif [ $RESPUESTA1 = 00 ] ;then
+	elif [ "$RESPUESTA1" = 00 ] ;then
 
 		rm -r datos/ 2>/dev/null
 		clear
@@ -918,7 +956,7 @@ function Menu() {
 		echo " Adios!!"
 		exit
 
-	elif [ $RESPUESTA1 = 000 ] ;then
+	elif [ "$RESPUESTA1" = 000 ] ;then
 
                 rm -r datos/ capturas/ 2>/dev/null
                 clear
@@ -928,27 +966,27 @@ function Menu() {
 
 
  
-        elif [ $RESPUESTA1 = 99 ] ;then
+        elif [ "$RESPUESTA1" = 99 ] ;then
  
 		rm -r datos/ 2>/dev/null
 		clear
 		banner
 		echo " La carpeta \"datos\" y todo su contenido ha sido borrada"
 		echo -n " Pulsa enter para volver"
-		read
+		read -r
 		Comienzo
 
-	elif [ $RESPUESTA1 = 999 ] ;then
+	elif [ "$RESPUESTA1" = 999 ] ;then
  
                 rm -r datos/ capturas/ 2>/dev/null
                 clear
                 banner
                 echo " La carpeta \"datos\" y \"capturas\" con todo su contenido han sido borradas"
                 echo -n " Pulsa enter para volver"
-                read
+                read -r
                 Comienzo
 
-	elif [ $RESPUESTA1 = 11 ] ;then
+	elif [ "$RESPUESTA1" = 11 ] ;then
 	
 		clear
 		banner
@@ -976,10 +1014,10 @@ function Menu() {
 		echo " pero nunca se sabe..."
 		echo
 		echo -n "Pulsa enter para volver"
-		read
+		read -r
 		Comienzo
 
-	elif [ $RESPUESTA1 = 21 ] ;then
+	elif [ "$RESPUESTA1" = 21 ] ;then
 
 		clear
 		banner
@@ -1007,10 +1045,10 @@ function Menu() {
                 echo " pero nunca se sabe..."
                 echo
                 echo -n "Pulsa enter para volver"
-                read
+                read -r
                 Comienzo
 
-	elif [ $RESPUESTA1 = 31 ] ;then
+	elif [ "$RESPUESTA1" = 31 ] ;then
 	       
 		clear
                 banner
@@ -1047,10 +1085,10 @@ function Menu() {
                 echo " pero nunca se sabe..."
                 echo 
                 echo -n "Pulsa enter para volver"
-                read
+                read -r
                 Comienzo
 
-elif [ $RESPUESTA1 = 41 ] ;then
+elif [ "$RESPUESTA1" = 41 ] ;then
 
                 clear
                 banner
@@ -1085,7 +1123,7 @@ elif [ $RESPUESTA1 = 41 ] ;then
                 echo " pero nunca se sabe..."
                 echo 
                 echo -n "Pulsa enter para volver"
-                read
+                read -r
                 Comienzo
 
 
@@ -1111,9 +1149,9 @@ function Nombre1_Opcion4()      {
 		echo " 3 Quiero volver"
 		echo
                 echo -n " Opcion: "
-                read respuesta
+                read -r respuesta
 
-			if  [ $respuesta = 1 ] ;then
+			if  [ "$respuesta" = 1 ] ;then
 
 				clear
 				banner
@@ -1124,9 +1162,9 @@ function Nombre1_Opcion4()      {
 				echo " O pulsa 99 para volver"
 				echo
 				echo -n " Opcion : "
-				read FILENAME
+				read -r FILENAME
 
-       		 		if [ $FILENAME = 99 ] ;then
+       		 		if [ "$FILENAME" = 99 ] ;then
 	
         	        		Opcion4
         			else
@@ -1144,7 +1182,7 @@ function Nombre1_Opcion4()      {
                 			clear
 					banner
                 			echo " No se encuentra el archivo ${FILENAME}.cap .Revise la carpeta \"capturas\".Pulse enter para volver a intentarlo"
-                			read
+                			read -r
                 			Opcion4
        			 	fi
  
@@ -1159,7 +1197,7 @@ function Nombre1_Opcion4()      {
               
               		  	fi
 
-			elif [ $respuesta = 2 ] ;then
+			elif [ "$respuesta" = 2 ] ;then
 			
 				clear
 				banner
@@ -1169,7 +1207,7 @@ function Nombre1_Opcion4()      {
 				Lanzar_Tcpdump
 
 
-			elif [ $respuesta = 3 ] ;then
+			elif [ "$respuesta" = 3 ] ;then
 
 				Comienzo
 			else
@@ -1179,7 +1217,7 @@ function Nombre1_Opcion4()      {
 				echo " $respuesta no es una opcion valida"
 				echo
 				echo -n " Pulsa enter para volver a intentarlo"			
-			       	read
+			       	read -r
 				Nombre1_Opcion4
 			
 			fi
@@ -1196,9 +1234,9 @@ function Nombre2_Opcion4()      {
 		echo " 3 Quiero volver"
 		echo
                 echo -n " Opcion: "
-                read respuesta
+                read -r respuesta
 
-			if  [ $respuesta = 1 ] ;then
+			if  [ "$respuesta" = 1 ] ;then
 
 				clear
 				banner
@@ -1209,9 +1247,9 @@ function Nombre2_Opcion4()      {
 				echo " O pulsa 99 para volver"
 				echo
 				echo -n " Opcion : "
-				read FILENAME2
+				read -r FILENAME2
 
-       		 		if [ $FILENAME2 = 99 ] ;then
+       		 		if [ "$FILENAME2" = 99 ] ;then
 	
         	        		Opcion4
         			else
@@ -1220,7 +1258,7 @@ function Nombre2_Opcion4()      {
 
         			fi
 
-        			if [ -f capturas/${FILENAME2}.cap ] 2>/dev/null  ;then
+        			if [ -f capturas/"${FILENAME2}".cap ] 2>/dev/null  ;then
  
                 			echo
  
@@ -1229,7 +1267,7 @@ function Nombre2_Opcion4()      {
                 			clear
 					banner
                 			echo " No se encuentra el archivo ${FILENAME2}.cap .Revise la carpeta \"capturas\".Pulse enter para volver a intentarlo"
-                			read
+                			read -r
                 			Nombre2_Opcion4
        			 	fi
  
@@ -1244,7 +1282,7 @@ function Nombre2_Opcion4()      {
               
               		  	fi
 
-			elif [ $respuesta = 2 ] ;then
+			elif [ "$respuesta" = 2 ] ;then
 			
 				clear
 				banner
@@ -1253,7 +1291,7 @@ function Nombre2_Opcion4()      {
 				Interfaz
 				Lanzar_Tcpdump2
 
-			elif [ $respuesta = 3 ] ;then
+			elif [ "$respuesta" = 3 ] ;then
 
 				Comienzo
 
@@ -1264,7 +1302,7 @@ function Nombre2_Opcion4()      {
 				echo " $respuesta no es una opcion valida"
                                 echo
                                 echo -n " Pulsa enter para volver a intentarlo"
-                                read
+                                read -r
                                 Nombre2_Opcion4
 			
 			fi
@@ -1283,12 +1321,12 @@ function Opcion4()	{
 	echo " Las IPs que hayan causadado trafico en la segunda captura, pero no en la primera."
 	echo
 	echo -n " Pulsa enter para continuar"
-        read
+        read -r
 	clear
 	banner
         Sacar_IPs
                 Seleccionar_IP
-                IP=`uniq datos/Unicas.dat | cat -n | sed -e 's/^ *//g' |  grep ^$Seleccion | awk '{print $2}'`
+                IP=$(uniq datos/Unicas.dat | cat -n | sed -e 's/^ *//g' |  grep ^$Seleccion | awk '{print $2}')
                 Investigar_IP
                        
                 }
@@ -1318,8 +1356,8 @@ function Sacar_IPs()    {       ## procesamos las 2 capturas para extraer las ip
         clear
         banner
         echo " Extrayendo IPs destino y origen de segunda captura..."
-        tcpdump -r capturas/${FILENAME2}.cap -nn | sed -e 's/://g' | awk '{print $3}' | cut -d '.' -f 1,2,3,4 | grep -v [a-z,A-Z,\>,\<] > datos/${FILENAME2}IPsOrigen.dat
-        tcpdump -r capturas/${FILENAME2}.cap -nn | sed -e 's/://g' | awk '{print $5}' | cut -d '.' -f 1,2,3,4 | grep -v [a-z,A-Z,\>,\<] > datos/${FILENAME2}IPsDestino.dat
+        tcpdump -r capturas/"${FILENAME2}".cap -nn | sed -e 's/://g' | awk '{print $3}' | cut -d '.' -f 1,2,3,4 | grep -v [a-z,A-Z,\>,\<] > datos/${FILENAME2}IPsOrigen.dat
+        tcpdump -r capturas/"${FILENAME2}".cap -nn | sed -e 's/://g' | awk '{print $5}' | cut -d '.' -f 1,2,3,4 | grep -v [a-z,A-Z,\>,\<] > datos/${FILENAME2}IPsDestino.dat
         cat datos/${FILENAME2}IPsDestino.dat datos/${FILENAME2}IPsOrigen.dat > datos/${FILENAME2}IPsSegundaCaptura.dat
 	echo
         echo "Hecho"
@@ -1346,13 +1384,13 @@ function Despejar_IPs() {  ############ ya teniendo los datos de todas las IPs q
 	clear
 	banner
         cat datos/${FILENAME2}IPsSegundaCaptura.dat | sort | uniq -c | sed -e 's/^ *//g' -e 's/\://g' | awk '{print $2}' > datos/IPsLimpias.dat
-        NumIPs=`cat -n datos/IPsLimpias.dat | tail -1 | awk '{print $1}'`
+        NumIPs=$(cat -n datos/IPsLimpias.dat | tail -1 | awk '{print $1}')
         ((NumIPs = NumIPs + 1))
         sleep 2
  
         while [ "$NumIPs" -gt "0" ] ; do
  
-                        IP=` head -${NumIPs} datos/IPsLimpias.dat | tail -1`
+                        IP=$( head -${NumIPs} datos/IPsLimpias.dat | tail -1)
 
                         echo   
                                        
@@ -1373,7 +1411,7 @@ function Despejar_IPs() {  ############ ya teniendo los datos de todas las IPs q
         clear
 	banner
         echo " Pulsa enter para ver las IPs que solo provocaron trafico durante la segunda captura"
-        read
+        read -r
         echo
         cat datos/Unicas.dat | sort | uniq
         echo
@@ -1394,10 +1432,10 @@ function Lanzar_Tcpdump()       {       ## lanzamos tcpdump para hacer la primer
         echo " Por favor, pulsa enter para confirmar" ; read
         clear
  
-        tcpdump -A -nn -i $INTERFAZ -w capturas/${FILENAME}.cap 2>/dev/null &
+        tcpdump -A -nn -i "$INTERFAZ" -w "capturas/${FILENAME}.cap" 2>/dev/null &
         PID=$!
  
-        while [ $TIEMPO -gt 0 ] ;do
+        while [ "$TIEMPO" -gt 0 ] ;do
  
                 ((TIEMPO--))
                 sleep 1
@@ -1422,10 +1460,10 @@ function Lanzar_Tcpdump2()        {     ## lanzamos tcpdump para hacer la segund
         echo
         echo -n " Por favor, pulsa enter para confirmar" ; read
         clear
-        tcpdump -A -nn -i $INTERFAZ -w capturas/${FILENAME2}.cap 2>/dev/null &
+        tcpdump -A -nn -i "$INTERFAZ" -w capturas/"${FILENAME2}".cap 2>/dev/null &
         PID=$!
  
-        while [ $TIEMPO -gt 0 ] ;do
+        while [ "$TIEMPO" -gt 0 ] ;do
  
                   ((TIEMPO--))
                   sleep 1
@@ -1454,7 +1492,7 @@ function Interfaz()      {                                      ##Seleccion de l
 
         ifconfig | grep  encap | awk '{print $1}' > /tmp/interfaces 
         sleep 5
-        NumeroDeInterfaces=`cat -n /tmp/interfaces | tail -1 | sed -e 's/^ *//g' | awk '{print $1}'`
+        NumeroDeInterfaces=$(cat -n /tmp/interfaces | tail -1 | sed -e 's/^ *//g' | awk '{print $1}')
         cat -n /tmp/interfaces
         echo
         echo  " Selecciona una interfaz"
@@ -1462,7 +1500,7 @@ function Interfaz()      {                                      ##Seleccion de l
 	echo " O pulsa 99 para volver al menu principal"
 	echo
 	echo -n " Opcion: "
-        read Seleccioninterfaz
+        read -r Seleccioninterfaz
 
 		if [ "$Seleccioninterfaz" = "99" ] ;then
 		
@@ -1481,7 +1519,7 @@ function Interfaz()      {                                      ##Seleccion de l
                         echo
                         echo
                         echo
-                        INTERFAZ=`uniq /tmp/interfaces | cat -n | sed -e 's/^ *//g' |  grep -w ^$Seleccioninterfaz | awk '{print $2}'`
+                        INTERFAZ=$(uniq /tmp/interfaces | cat -n | sed -e 's/^ *//g' |  grep -w "^$Seleccioninterfaz" | awk '{print $2}')
 
                 else
 
@@ -1490,7 +1528,7 @@ function Interfaz()      {                                      ##Seleccion de l
                         echo " Seleccion incorrecta."
 			echo
 			echo " Pulsa enter para volver a probar"
-			read
+			read -r
                         Interfaz
 
                 fi
@@ -1511,7 +1549,7 @@ function Pedir_Tiempo()      {          # pedimos tiempo de captura en segundos
  
         TEST_TIEMPO=1
  
-                        if [ $TIEMPO -ge $TEST_TIEMPO ] 2>/dev/null ;then  
+                        if [ "$TIEMPO" -ge $TEST_TIEMPO ] 2>/dev/null ;then  
  
                                   echo
  
@@ -1524,7 +1562,7 @@ function Pedir_Tiempo()      {          # pedimos tiempo de captura en segundos
                                   echo " Debes introducir un tiempo valido, recuerda que es en segundos"
                                   echo
 				  echo -n " Pulsa enter para volver a intentarlo"
-				  read
+				  read -r
                                   Pedir_Tiempo
  
                          fi
@@ -1544,7 +1582,7 @@ function Nombre_Captura_Limpia()  {     #asignamos un nombre a la primera captur
 	echo -n " Opcion: "
         read FILENAME 
 
-		if [ $FILENAME = 99 ] ;then
+		if [ "$FILENAME" = 99 ] ;then
 	
 			Comienzo
 
@@ -1565,14 +1603,14 @@ function Nombre_Captura_Limpia()  {     #asignamos un nombre a la primera captur
                 fi
        
                        
-                if [ -f capturas/$FILENAME ] ;then
+                if [ -f capturas/"$FILENAME" ] ;then
 			
  			 clear
 			 banner
                          echo " Ya existe una captura llamada \"$FILENAME\". Por favor, elije otro nombre"
 			 echo
 			 echo " Pulsa enter para volver a intentarlo"
-			 read
+			 read -r
                          Nombre_Captura_Limpia
                
                  else
@@ -1590,9 +1628,9 @@ function Nombre_Captura_Malware()  {            #asignamos un nombre a la segund
           echo " O pulsa 99 para volver al menu principal"
           echo
           echo -n " Opcion: "
-          read respuesta
+          read -r respuesta
 
-                if [ $respuesta = 99 ] ;then
+                if [ "$respuesta" = 99 ] ;then
 
                         Comenzar
 
@@ -1602,7 +1640,7 @@ function Nombre_Captura_Malware()  {            #asignamos un nombre a la segund
 
                 fi
 
-          read FILENAME2
+          read -r FILENAME2
 
 
  
@@ -1617,14 +1655,14 @@ function Nombre_Captura_Malware()  {            #asignamos un nombre a la segund
                   fi    
                          
                          
-                  if [ -f capturas/$FILENAME2 ] ;then
+                  if [ -f capturas/"$FILENAME"2 ] ;then
 		
                 	   clear
 			   banner 
                            echo " Ya existe una captura llamada \"$FILENAME2\". Por favor, elije otro nombre"
 			   echo 
 			   echo " Pulsa enter para volver a intentarlo"
-			   read
+			   read -r
                            Nombre_Captura_Malware
  
                    else
